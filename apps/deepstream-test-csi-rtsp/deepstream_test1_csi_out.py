@@ -30,6 +30,7 @@ from common.bus_call import bus_call
 
 import pyds
 
+
 PGIE_CLASS_ID_VEHICLE = 0
 PGIE_CLASS_ID_BICYCLE = 1
 PGIE_CLASS_ID_PERSON = 2
@@ -196,6 +197,7 @@ def main(args):
     fps = args.framerate
     height = args.height
     width = args.width
+    is_streammux = args.streammux
 
     # Standard GStreamer initialization
     Gst.init(None)
@@ -347,23 +349,30 @@ def main(args):
     source.link(caps_nvarguscamerasrc)
     caps_nvarguscamerasrc.link(vidconvsrc)
     vidconvsrc.link(nvvidconvsrc)
-    nvvidconvsrc.link(caps_vidconvsrc)
-    sinkpad = streammux.get_request_pad("sink_0")
-    if not sinkpad:
-        sys.stderr.write(" Unable to get the sink pad of streammux \n")
-    srcpad = caps_vidconvsrc.get_static_pad("src")
-    if not srcpad:
-        sys.stderr.write(" Unable to get source pad of caps_vidconvsrc \n")
-    srcpad.link(sinkpad)
-    streammux.link(pgie)
-    pgie.link(nvvidconv)
-    nvvidconv.link(nvosd)
-    nvosd.link(nvvidconv_postosd)
-    nvvidconv_postosd.link(caps)
-    caps.link(encoder)
+    if is_streammux == 1:
+        nvvidconvsrc.link(caps_vidconvsrc)
+        sinkpad = streammux.get_request_pad("sink_0")
+        if not sinkpad:
+            sys.stderr.write(" Unable to get the sink pad of streammux \n")
+        srcpad = caps_vidconvsrc.get_static_pad("src")
+        if not srcpad:
+            sys.stderr.write(" Unable to get source pad of caps_vidconvsrc \n")
+        srcpad.link(sinkpad)
+        streammux.link(pgie)
+        pgie.link(nvvidconv)
+        nvvidconv.link(nvosd)
+        nvosd.link(nvvidconv_postosd)
+        nvvidconv_postosd.link(caps)
+        caps.link(encoder)
+    else:
+        nvvidconvsrc.link(encoder)
+    
     encoder.link(queue)
     queue.link(rtppay)
     rtppay.link(udp_sink)
+
+
+
 
     # create an event loop and feed gstreamer bus mesages to it
     loop = GLib.MainLoop()
@@ -391,6 +400,16 @@ def main(args):
         sys.stderr.write(" Unable to get sink pad of nvosd \n")
     
     osdsinkpad.add_probe(Gst.PadProbeType.BUFFER, osd_sink_pad_buffer_probe, 0)
+
+
+    # show graph of pipeline
+    print("dot file is generated as \"test.dot\" in current directory \n")
+    fie = Gst.debug_bin_to_dot_data(pipeline, Gst.DebugGraphDetails.ALL)
+    with open("deepstreamtest.dot", "w") as fes:
+        fes.write(fie)
+    # To convert to png: 
+    # dot -Tpng deep_stream_test.dot > deep_stream_test.png
+
 
     # start play back and listen to events
     print("Starting pipeline \n")
@@ -430,6 +449,7 @@ def parse_args():
     parser.add_argument("-fps", "--framerate", default=30, help="Set the framerate", type=int)
     parser.add_argument("-ht", "--height", default=720, help="Set the height", type=int)
     parser.add_argument("-wd", "--width", default=1280, help="Set the width", type=int)
+    parser.add_argument("-nvs", "--streammux", default=1, help="If streammux used or not", choices=[0, 1], type=int)
 
     args = parser.parse_args()
 

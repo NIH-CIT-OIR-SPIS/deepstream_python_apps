@@ -137,6 +137,10 @@ def main(args):
     if not source:
         sys.stderr.write(" Unable to create Source \n")
     
+    
+
+
+
     # Since the data format in the input file is elementary h264 stream,
     # we need a h264parser
     print("Creating H264Parser \n")
@@ -149,6 +153,7 @@ def main(args):
     decoder = Gst.ElementFactory.make("nvv4l2decoder", "nvv4l2-decoder")
     if not decoder:
         sys.stderr.write(" Unable to create Nvv4l2 Decoder \n")
+
     
     # Create nvstreammux instance to form batches from one or more sources.
     streammux = Gst.ElementFactory.make("nvstreammux", "Stream-muxer")
@@ -182,19 +187,33 @@ def main(args):
     if codec == "H264":
         encoder = Gst.ElementFactory.make("nvv4l2h264enc", "encoder")
         print("Creating H264 Encoder")
+        encoder.set_property('bitrate', bitrate)
+        if is_aarch64():
+            encoder.set_property('preset-level', 1)
+            encoder.set_property('insert-sps-pps', 1)
     elif codec == "H265":
         encoder = Gst.ElementFactory.make("nvv4l2h265enc", "encoder")
         print("Creating H265 Encoder")
+        encoder.set_property('bitrate', bitrate)
+        if is_aarch64():
+            encoder.set_property('preset-level', 1)
+            encoder.set_property('insert-sps-pps', 1)
+    elif codec == "X264":
+        print("Creating x264enc")
+        encoder = Gst.ElementFactory.make("x264enc", "encoder_x264")
+        if not encoder:
+            sys.stderr.write(" Unable to create encoder x264 \n")
+        encoder.set_property("speed-preset", 1) # 1 is superfast, 2 is veryfast, 3 is faster, 4 is fast, 5 is medium, 6 is slow, 7 is slower, 8 is veryslow, 9 is placebo
+        encoder.set_property("tune", "zerolatency")
+        encoder.set_property("bitrate", bitrate // 1000)
+
     if not encoder:
         sys.stderr.write(" Unable to create encoder")
-    encoder.set_property('bitrate', bitrate)
-    if is_aarch64():
-        encoder.set_property('preset-level', 1)
-        encoder.set_property('insert-sps-pps', 1)
+
         #encoder.set_property('bufapi-version', 1)
     
     # Make the payload-encode video into RTP packets
-    if codec == "H264":
+    if codec == "H264" or codec == "X264":
         rtppay = Gst.ElementFactory.make("rtph264pay", "rtppay")
         print("Creating H264 rtppay")
     elif codec == "H265":
@@ -209,15 +228,15 @@ def main(args):
     if not sink:
         sys.stderr.write(" Unable to create udpsink")
     
-    sink.set_property('host', '224.224.255.255')
+    sink.set_property('host', '127.0.0.1')
     sink.set_property('port', updsink_port_num)
     sink.set_property('async', False)
     sink.set_property('sync', 1)
     
     print("Playing file %s " %stream_path)
     source.set_property('location', stream_path)
-    streammux.set_property('width', 1920)
-    streammux.set_property('height', 1080)
+    streammux.set_property('width', 1280)
+    streammux.set_property('height', 720)
     streammux.set_property('batch-size', 1)
     streammux.set_property('batched-push-timeout', 4000000)
     
@@ -292,6 +311,10 @@ def main(args):
     
     osdsinkpad.add_probe(Gst.PadProbeType.BUFFER, osd_sink_pad_buffer_probe, 0)
     
+
+    # Place debug prints on GST_DEBUG for elements in this pipeline
+    Gst.debug_bin_to_dot_file(pipeline, Gst.DebugGraphDetails.ALL, 'ds-app')
+    
     # start play back and listen to events
     print("Starting pipeline \n")
     pipeline.set_state(Gst.State.PLAYING)
@@ -307,7 +330,7 @@ def parse_args():
     parser.add_argument("-i", "--input",
                   help="Path to input H264 elementry stream", required=True)
     parser.add_argument("-c", "--codec", default="H264",
-                  help="RTSP Streaming Codec H264/H265 , default=H264", choices=['H264','H265'])
+                  help="RTSP Streaming Codec H264/H265 , default=H264", choices=['H264','H265', 'X264'])
     parser.add_argument("-b", "--bitrate", default=4000000,
                   help="Set the encoding bitrate ", type=int)
     # Check input arguments

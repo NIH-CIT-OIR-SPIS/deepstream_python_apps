@@ -48,6 +48,7 @@ OSD_PROCESS_MODE = 0
 OSD_DISPLAY_TEXT = 0
 pgie_classes_str = ["Vehicle", "TwoWheeler", "Person", "RoadSign"]
 
+NO_STREAMMUX = False
 # tiler_sink_pad_buffer_probe  will extract metadata received on OSD sink pad
 # and update params for drawing rectangle, object information etc.
 
@@ -260,19 +261,19 @@ def main(args):
         if not source_bin:
             sys.stderr.write("Unable to create source bin \n")
         
+        if not NO_STREAMMUX:
+            padname = "sink_%u" % i
+            sinkpad = streammux.get_request_pad(padname)
+            if not sinkpad:
+                sys.stderr.write("Unable to create sink pad bin \n")
+            if nvvidconvsrc is not None:
+                srcpad = nvvidconvsrc.get_static_pad("src")
+            else:
+                srcpad = source_bin.get_static_pad("src")
 
-        # padname = "sink_%u" % i
-        # sinkpad = streammux.get_request_pad(padname)
-        # if not sinkpad:
-        #     sys.stderr.write("Unable to create sink pad bin \n")
-        # if nvvidconvsrc is not None:
-        #     srcpad = nvvidconvsrc.get_static_pad("src")
-        # else:
-        #     srcpad = source_bin.get_static_pad("src")
-
-        # if not srcpad:
-        #     sys.stderr.write("Unable to create src pad bin \n")
-        # srcpad.link(sinkpad)
+            if not srcpad:
+                sys.stderr.write("Unable to create src pad bin \n")
+            srcpad.link(sinkpad)
 
     print("Creating Pgie \n ")
     if gie=="nvinfer":
@@ -395,6 +396,18 @@ def main(args):
     pipeline.add(rtppay)
     pipeline.add(sink)
 
+    # # streammux.link(pgie)
+    # # pgie.link(nvvidconv)
+    # # nvvidconv.link(tiler)
+    # # tiler.link(nvosd)
+    # # nvosd.link(nvvidconv_postosd)
+    # # nvvidconv_postosd.link(caps)
+    # # caps.link(encoder)
+    # nvvidconvsrc.link(encoder)
+    # encoder.link(rtppay)
+    # rtppay.link(sink)
+
+    
     # streammux.link(pgie)
     # pgie.link(nvvidconv)
     # nvvidconv.link(tiler)
@@ -402,7 +415,15 @@ def main(args):
     # nvosd.link(nvvidconv_postosd)
     # nvvidconv_postosd.link(caps)
     # caps.link(encoder)
-    nvvidconvsrc.link(encoder)
+    # encoder.link(rtppay)
+    # rtppay.link(sink)
+
+    streammux.link(nvvidconv)
+    nvvidconv.link(tiler)
+    tiler.link(nvosd)
+    nvosd.link(nvvidconv_postosd)
+    nvvidconv_postosd.link(caps)
+    caps.link(encoder)
     encoder.link(rtppay)
     rtppay.link(sink)
 
