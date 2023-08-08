@@ -402,6 +402,13 @@ def main(args):
     osdsinkpad.add_probe(Gst.PadProbeType.BUFFER, osd_sink_pad_buffer_probe, 0)
 
 
+
+
+
+    # start play back and listen to events
+    print("Starting pipeline \n")
+    pipeline.set_state(Gst.State.PLAYING)
+    
     # show graph of pipeline
     print("dot file is generated as \"test.dot\" in current directory \n")
     fie = Gst.debug_bin_to_dot_data(pipeline, Gst.DebugGraphDetails.ALL)
@@ -410,10 +417,6 @@ def main(args):
     # To convert to png: 
     # dot -Tpng deep_stream_test.dot > deep_stream_test.png
 
-
-    # start play back and listen to events
-    print("Starting pipeline \n")
-    pipeline.set_state(Gst.State.PLAYING)
     try:
         loop.run()
     except:
