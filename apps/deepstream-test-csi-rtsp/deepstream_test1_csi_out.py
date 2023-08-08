@@ -17,6 +17,7 @@
 # limitations under the License.
 ################################################################################
 
+import os
 import argparse
 import sys
 sys.path.append('../')
@@ -201,6 +202,14 @@ def main(args):
 
     # Standard GStreamer initialization
     Gst.init(None)
+
+    # For debugging must be after Gst.init
+    Gst.debug_set_active(True)
+    Gst.debug_set_default_threshold(5)
+    # no colored text in output logs
+    Gst.debug_set_color_mode(0)
+
+
 
     # Create gstreamer elements
     # Create Pipeline element that will form a connection of other elements

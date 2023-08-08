@@ -19,41 +19,41 @@ import gi
 import sys
 gi.require_version('Gst', '1.0')
 from gi.repository import Gst
-# def bus_call(bus, message, loop):
-#     t = message.type
-#     if t == Gst.MessageType.EOS:
-#         sys.stdout.write("End-of-stream\n")
-#         loop.quit()
-#     elif t==Gst.MessageType.WARNING:
-#         err, debug = message.parse_warning()
-#         sys.stderr.write("Warning: %s: %s\n" % (err, debug))
-#     elif t == Gst.MessageType.ERROR:
-#         err, debug = message.parse_error()
-#         sys.stderr.write("Error: %s: %s\n" % (err, debug))
-#         loop.quit()
-#     return True
-
 def bus_call(bus, message, loop):
-    if message.type == Gst.MessageType.EOS:
+    t = message.type
+    if t == Gst.MessageType.EOS:
         sys.stdout.write("End-of-stream\n")
         loop.quit()
-    elif message.type == Gst.MessageType.ERROR:
+    elif t==Gst.MessageType.WARNING:
+        err, debug = message.parse_warning()
+        sys.stderr.write("Warning: %s: %s\n" % (err, debug))
+    elif t == Gst.MessageType.ERROR:
         err, debug = message.parse_error()
-        out_str = " Error: %s: %s\n" % (err, debug)
-
-        sys.stdout.write(out_str)
+        sys.stderr.write("Error: %s: %s\n" % (err, debug))
         loop.quit()
-    elif message.type == Gst.MessageType.STATE_CHANGED:
-        old, new, pending = message.parse_state_changed()
-        out_str = 'State changed from %s to %s (pending=%s)\n' % (old.value_name, new.value_name, pending.value_name)
-        sys.stdout.write(out_str)
-    elif message.type == Gst.MessageType.STREAM_STATUS:
-        type_, owner = message.parse_stream_status()
-        out_str = 'Stream status changed to %s (owner=%s)\n' % (type_.value_name, owner.name)
-        sys.stdout.write(out_str)
-    elif message.type == Gst.MessageType.DURATION_CHANGED:
-        sys.stdout.write('Duration changed\n')
-    else:
-        out_str = '!! Unknown message type: %r \n' % message.type
-        sys.stdout.write(out_str)
     return True
+
+# def bus_call(bus, message, loop):
+#     if message.type == Gst.MessageType.EOS:
+#         sys.stdout.write("End-of-stream\n")
+#         loop.quit()
+#     elif message.type == Gst.MessageType.ERROR:
+#         err, debug = message.parse_error()
+#         out_str = " Error: %s: %s\n" % (err, debug)
+
+#         sys.stdout.write(out_str)
+#         loop.quit()
+#     elif message.type == Gst.MessageType.STATE_CHANGED:
+#         old, new, pending = message.parse_state_changed()
+#         out_str = 'State changed from %s to %s (pending=%s)\n' % (old.value_name, new.value_name, pending.value_name)
+#         sys.stdout.write(out_str)
+#     elif message.type == Gst.MessageType.STREAM_STATUS:
+#         type_, owner = message.parse_stream_status()
+#         out_str = 'Stream status changed to %s (owner=%s)\n' % (type_.value_name, owner.name)
+#         sys.stdout.write(out_str)
+#     elif message.type == Gst.MessageType.DURATION_CHANGED:
+#         sys.stdout.write('Duration changed\n')
+#     else:
+#         out_str = '!! Unknown message type: %r \n' % message.type
+#         sys.stdout.write(out_str)
+#     return True
