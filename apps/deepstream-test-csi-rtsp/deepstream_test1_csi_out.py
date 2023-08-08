@@ -199,15 +199,17 @@ def main(args):
     height = args.height
     width = args.width
     is_streammux = args.streammux
+    debug_level = args.debug
 
     # Standard GStreamer initialization
     Gst.init(None)
-
-    # For debugging must be after Gst.init
-    Gst.debug_set_active(True)
-    Gst.debug_set_default_threshold(5)
-    # no colored text in output logs
-    Gst.debug_set_color_mode(0)
+    if debug_level > 0:
+        # For debugging must be after Gst.init
+        Gst.debug_set_active(True)
+        Gst.debug_set_default_threshold(debug_level)
+        # no colored text in output logs
+        if args.colordebug == 0:
+            Gst.debug_set_color_mode(0)
 
 
 
@@ -462,7 +464,8 @@ def parse_args():
     parser.add_argument("-ht", "--height", default=720, help="Set the height", type=int)
     parser.add_argument("-wd", "--width", default=1280, help="Set the width", type=int)
     parser.add_argument("-nvs", "--streammux", default=1, help="If streammux used or not", choices=[0, 1], type=int)
-
+    parser.add_argument("-dbg", "--debug", default=0, help="If debug used or not, default=0 (no debug) [0, 1, 2, 3, 4, 5, 6, 7, 8]", choices=[0, 1, 2, 3, 4, 5, 6, 7], type=int)
+    parser.add_argument("-cl", "--colordebug", default=0, help="If color debug used or not, default=0 (no color debug) [0, 1]", choices=[0, 1], type=int)
     args = parser.parse_args()
 
     # Print current configuration
