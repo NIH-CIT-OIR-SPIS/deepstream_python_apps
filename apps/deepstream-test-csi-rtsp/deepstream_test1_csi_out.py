@@ -353,9 +353,7 @@ def main(args):
     pipeline.add(nvvidconv)
     pipeline.add(nvosd)
     pipeline.add(nvvidconv_postosd)
-    if caps is not None:
-        pipeline.add(caps)
-
+    pipeline.add(caps)
     pipeline.add(encoder)
     pipeline.add(queue)
     pipeline.add(rtppay)
@@ -379,11 +377,8 @@ def main(args):
         pgie.link(nvvidconv)
         nvvidconv.link(nvosd)
         nvosd.link(nvvidconv_postosd)
-        if caps is None:
-            nvvidconv_postosd.link(encoder)
-        else:
-            nvvidconv_postosd.link(caps)
-            caps.link(encoder)
+        nvvidconv_postosd.link(caps)
+        caps.link(encoder)
         
     else:
         nvvidconvsrc.link(encoder)
