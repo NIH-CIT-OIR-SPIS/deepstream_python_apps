@@ -373,8 +373,12 @@ def main(args):
         pgie.link(nvvidconv)
         nvvidconv.link(nvosd)
         nvosd.link(nvvidconv_postosd)
-        nvvidconv_postosd.link(caps)
-        caps.link(encoder)
+        if codec == "X264":
+            nvvidconv_postosd.link(encoder)
+        else:
+            nvvidconv_postosd.link(caps)
+            caps.link(encoder)
+        
     else:
         nvvidconvsrc.link(encoder)
     
@@ -421,12 +425,13 @@ def main(args):
     pipeline.set_state(Gst.State.PLAYING)
     
     # show graph of pipeline
-    print("dot file is generated as \"test.dot\" in current directory \n")
-    fie = Gst.debug_bin_to_dot_data(pipeline, Gst.DebugGraphDetails.ALL)
-    with open("deepstreamtest.dot", "w") as fes:
-        fes.write(fie)
-    # To convert to png: 
-    # dot -Tpng deep_stream_test.dot > deep_stream_test.png
+    if debug_level > 0:
+        print("dot file is generated as \"test.dot\" in current directory \n")
+        fie = Gst.debug_bin_to_dot_data(pipeline, Gst.DebugGraphDetails.ALL)
+        with open("deepstreamtest.dot", "w") as fes:
+            fes.write(fie)
+        # To convert to png: 
+        # dot -Tpng deep_stream_test.dot > deep_stream_test.png
 
     try:
         loop.run()
