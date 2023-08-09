@@ -31,7 +31,8 @@ from common.bus_call import bus_call
 
 import pyds
 
-
+URI_CSI = "argus://"
+URI_USB = "/dev/video"
 PGIE_CLASS_ID_VEHICLE = 0
 PGIE_CLASS_ID_BICYCLE = 1
 PGIE_CLASS_ID_PERSON = 2
