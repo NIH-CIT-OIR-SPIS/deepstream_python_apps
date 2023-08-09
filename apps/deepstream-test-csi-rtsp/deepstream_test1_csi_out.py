@@ -294,10 +294,11 @@ def main(args):
     # Create a caps filter
     caps_vidconvsrc = Gst.ElementFactory.make("capsfilter", "filter")
     caps_vidconvsrc.set_property("caps", Gst.Caps.from_string("video/x-raw(memory:NVMM)"))
-
-
-    caps = Gst.ElementFactory.make("capsfilter", "filter_enc")
-    caps.set_property("caps", Gst.Caps.from_string("video/x-raw(memory:NVMM), format=I420"))
+    
+    caps = None
+    if codec != "X264":
+        caps = Gst.ElementFactory.make("capsfilter", "filter_enc")
+        caps.set_property("caps", Gst.Caps.from_string("video/x-raw(memory:NVMM), format=I420"))
     # Make the encoder 
     encoder = make_encoder(codec, bitrate)
 
@@ -348,7 +349,8 @@ def main(args):
     pipeline.add(nvvidconv)
     pipeline.add(nvosd)
     pipeline.add(nvvidconv_postosd)
-    pipeline.add(caps)
+    if caps is not None:
+        pipeline.add(caps)
 
     pipeline.add(encoder)
     pipeline.add(queue)
