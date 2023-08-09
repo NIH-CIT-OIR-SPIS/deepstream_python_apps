@@ -296,9 +296,13 @@ def main(args):
     caps_vidconvsrc.set_property("caps", Gst.Caps.from_string("video/x-raw(memory:NVMM)"))
     
     caps = None
-    if codec != "X264":
+    if codec == "H264" or codec == "H265":
         caps = Gst.ElementFactory.make("capsfilter", "filter_enc")
         caps.set_property("caps", Gst.Caps.from_string("video/x-raw(memory:NVMM), format=I420"))
+    else:
+        caps = Gst.ElementFactory.make("capsfilter", "filter_enc")
+        caps.set_property("caps", Gst.Caps.from_string("video/x-raw, format=I420"))
+    
     # Make the encoder 
     encoder = make_encoder(codec, bitrate)
 
@@ -375,7 +379,7 @@ def main(args):
         pgie.link(nvvidconv)
         nvvidconv.link(nvosd)
         nvosd.link(nvvidconv_postosd)
-        if codec == "X264":
+        if caps is None:
             nvvidconv_postosd.link(encoder)
         else:
             nvvidconv_postosd.link(caps)
